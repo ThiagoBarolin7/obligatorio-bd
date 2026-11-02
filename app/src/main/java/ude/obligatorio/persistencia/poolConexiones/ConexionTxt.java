@@ -1,28 +1,145 @@
 package ude.obligatorio.persistencia.poolConexiones;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.concurrent.locks.Lock;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
+import java.util.HashMap;
+import java.util.Map;
+import ude.obligatorio.logica.excepciones.PersistenciaException;
 
 public class ConexionTxt implements IConexion {
 
+    private static final String ALUMNOS = "alumnos.txt";
+    private static final String REGISTROS = "registros%s.txt";
+
     private final Path directorio;
-    private final boolean escribiendo;
+    private final boolean modifica;
 
-    public ConexionTxt(Path directorio, boolean escribiendo) {
+    private final Map<Path, Path> temporales = new HashMap<>();
+
+    public ConexionTxt(Path directorio, boolean modifica) {
         this.directorio = directorio;
-        this.escribiendo = escribiendo;
+        this.modifica = modifica;
     }
 
-    public boolean estaEscribiendo() {
-        return  escribiendo;
+    public boolean modifica() {
+        return modifica;
     }
 
-    public Path getArchivoAlumnos() {
-        return directorio.resolve("alumnos.txt");
+    public BufferedReader getArchivoAlumnos() throws PersistenciaException {
+        try {
+            return Files.newBufferedReader(obtenerArchivo(ALUMNOS));
+        } catch (IOException e) {
+            throw new PersistenciaException("Error al obtener el archivo");
+        }
     }
 
-    public Path getArchivoRegistros(String cedula) {
-        return directorio.resolve("registros" + cedula + ".txt");
+    public BufferedWriter getArchivoAlumnosEscritura() throws PersistenciaException {
+        if (!modifica) {
+            throw new PersistenciaException("No se permite escribir el archivo");
+        }
+
+        try {
+            return Files.newBufferedWriter(
+                    obtenerArchivo(ALUMNOS), StandardOpenOption.APPEND, StandardOpenOption.WRITE);
+        } catch (IOException e) {
+            throw new PersistenciaException("Error al obtener el archivo");
+        }
+    }
+
+    public BufferedReader getArchivoRegistros(int cedula) throws PersistenciaException {
+        try {
+            return Files.newBufferedReader(obtenerArchivo(String.format(REGISTROS, String.valueOf(cedula))));
+        } catch (IOException e) {
+            throw new PersistenciaException("Error al obtener el archivo");
+        }
+    }
+
+    public BufferedWriter getArchivoRegistrosEscritura(int cedula) throws PersistenciaException {
+        if (!modifica) {
+            throw new PersistenciaException("No se permite escribir el archivo");
+        }
+
+        try {
+            return Files.newBufferedWriter(
+                    obtenerArchivo(String.format(REGISTROS, String.valueOf(cedula))),
+                    StandardOpenOption.APPEND,
+                    StandardOpenOption.WRITE);
+        } catch (IOException e) {
+            throw new PersistenciaException("Error al obtener el archivo");
+        }
+    }
+
+    void finalize(boolean ok) throws IOException {
+        if (ok) {
+            confirmarCambios();
+        } else {
+            descartarCambios();
+        }
+    }
+
+    private Path obtenerArchivo(String nombre) throws PersistenciaException {
+        Path original = directorio.resolve(nombre);
+
+        if (!modifica) {
+            return original;
+        }
+
+        Path temporal = temporales.get(original);
+
+        if (temporal == null) {
+            temporal = crearTemporal(original);
+            temporales.put(original, temporal);
+        }
+
+        return temporal;
+    }
+
+    private Path crearTemporal(Path original) throws PersistenciaException {
+        Path temporal = null;
+
+        try {
+            String nombre = original.getFileName().toString();
+
+            temporal = Files.createTempFile(directorio, nombre + "-", ".temp");
+
+            if (Files.exists(original)) {
+                Files.copy(original, temporal, StandardCopyOption.REPLACE_EXISTING);
+            }
+
+            return temporal;
+        } catch (IOException e) {
+            if (temporal != null) {
+                try {
+                    Files.deleteIfExists(temporal);
+                } catch (IOException ignored) {
+                }
+            }
+
+            throw new PersistenciaException("Error al obtener el archivo");
+        }
+    }
+
+    private void confirmarCambios() throws IOException {
+        for (var entrada : temporales.entrySet()) {
+            Path original = entrada.getKey();
+            Path temporal = entrada.getValue();
+
+            Files.move(temporal, original, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+        }
+
+        temporales.clear();
+    }
+
+    private void descartarCambios() throws IOException {
+        for (Path temporal : temporales.values()) {
+            Files.deleteIfExists(temporal);
+        }
+
+        temporales.clear();
     }
 }

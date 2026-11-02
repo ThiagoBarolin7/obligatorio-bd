@@ -5,25 +5,25 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 
+import ude.obligatorio.logica.excepciones.PersistenciaException;
 import ude.obligatorio.persistencia.poolConexiones.ConexionTxt;
 import ude.obligatorio.persistencia.poolConexiones.IConexion;
 
-public class DAOAlumnosTxt {
+public class DAOAlumnosTxt implements IDAOAlumnos {
 
-    @Override 
+    @Override
     public boolean member(IConexion icon, int ced) throws PersistenciaException {
         boolean existeCedula = false;
-        ConexionTxt conexionTxt = ((ConexionTxt) icon).getConnection();
+        ConexionTxt con = (ConexionTxt) icon;
+        String linea;
 
-        try (PreparedStatement pstmt = con.prepareStatement(new Consultas().existeAlumno());) {
-                           
-            pstmt.setInt(1, ced);
-
-            try (ResultSet rs = pstmt.executeQuery();) {
-                existeCedula = rs.next();
+        try (BufferedReader reader = con.getArchivoAlumnos()) {
+            while (!existeCedula && (linea = reader.readLine()) != null) {
+                String cedula = linea.split("\\|")[0].trim();
+                existeCedula = cedula.equals(String.valueOf(ced));
             }
-        } catch (SQLException e) {
-            throw new PersistenciaException("Error de acceso a los datos (member alumno)");
+        } catch (IOException e) {
+            throw new PersistenciaException("Error de acceso a los datos");
         }
 
         return existeCedula;
@@ -150,17 +150,5 @@ public class DAOAlumnosTxt {
             throw new PersistenciaException("Error de acceso a los datos (contar alumnos)");
         }
         return cant;
-    }
-
-    private BufferedReader abrirLectura(IConexion icon) {
-        new Files.newBufferedReader(
-                ((ConexionTxt) icon).getArchivoAlumnos()
-            );
-    }
-
-    private BufferedWriter abrirEscritura(IConexion icon) {
-        new Files.newBufferedWriter(
-
-        )
     }
 }
