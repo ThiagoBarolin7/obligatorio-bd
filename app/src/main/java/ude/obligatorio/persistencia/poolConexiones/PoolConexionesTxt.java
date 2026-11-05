@@ -9,14 +9,21 @@ import ude.obligatorio.logica.excepciones.PersistenciaException;
 public class PoolConexionesTxt implements IPoolConexiones {
 
     private final Path directorio;
+    private final int maximoEscritoresEnEspera;
+
     private int numeroDeLectores;
     private boolean estaEscribiendo;
+    private int escritoresEsperando;
 
     public PoolConexionesTxt() throws PersistenciaException {
         try {
             Properties p = new Properties();
             p.load(new FileInputStream("config.properties"));
             directorio = Path.of(p.getProperty("directorio"));
+            maximoEscritoresEnEspera = Integer.parseInt(p.getProperty("maximoEscritoresEnEspera"));
+
+            estaEscribiendo = false;
+            escritoresEsperando = 0;
         } catch (Exception e) {
             throw new PersistenciaException("Error al inicializar el pool de conexiones");
         }
@@ -24,17 +31,13 @@ public class PoolConexionesTxt implements IPoolConexiones {
 
     @Override
     public synchronized IConexion obtenerConexion(boolean modifica) throws PersistenciaException {
-        try {
-            if (modifica) {
-                adquirirEscritura();
-            } else {
-                adquirirLectura();
-            }
-
-            return new ConexionTxt(directorio, modifica);
-        } catch (InterruptedException e) {
-            throw new PersistenciaException("Error al obtener la conexion");
+        if (modifica) {
+            adquirirEscritura();
+        } else {
+            adquirirLectura();
         }
+
+        return new ConexionTxt(directorio, modifica);
     }
 
     @Override
@@ -54,10 +57,15 @@ public class PoolConexionesTxt implements IPoolConexiones {
         }
     }
 
-    public void adquirirLectura() throws InterruptedException {
-        while (estaEscribiendo) {
-            this.wait();
+    public void adquirirLectura() throws PersistenciaException {
+        try {
+            while (estaEscribiendo || escritoresEsperando > maximoEscritoresEnEspera) {
+                this.wait();
+            }
+        } catch (InterruptedException e) {
+            throw new PersistenciaException("Error al obtener conexion");
         }
+
         numeroDeLectores++;
     }
 
@@ -68,10 +76,18 @@ public class PoolConexionesTxt implements IPoolConexiones {
         }
     }
 
-    public void adquirirEscritura() throws InterruptedException {
-        while (estaEscribiendo || numeroDeLectores > 0) {
-            this.wait();
+    public void adquirirEscritura() throws PersistenciaException {
+        escritoresEsperando++;
+        try {
+            while (estaEscribiendo || numeroDeLectores > 0) {
+                this.wait();
+            }
+        } catch (InterruptedException e) {
+            throw new PersistenciaException("Error al obtener conexion");
+        } finally {
+            escritoresEsperando--;
         }
+
         estaEscribiendo = true;
     }
 

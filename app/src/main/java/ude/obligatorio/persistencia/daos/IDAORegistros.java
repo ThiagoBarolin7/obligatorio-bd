@@ -10,7 +10,7 @@ import ude.obligatorio.logica.valueObjects.VORegistroListado;
 
 public interface IDAORegistros {
 
-    public int largo(IConexion icon) throws PersistenciaException;
+    int largo(IConexion icon) throws PersistenciaException;
 
     void insback(IConexion icon, Registro reg) throws PersistenciaException;
 

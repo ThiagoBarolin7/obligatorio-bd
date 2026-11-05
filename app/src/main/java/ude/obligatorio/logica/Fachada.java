@@ -20,6 +20,7 @@ import ude.obligatorio.persistencia.daos.*;
 import ude.obligatorio.persistencia.poolConexiones.IConexion;
 import ude.obligatorio.persistencia.poolConexiones.IPoolConexiones;
 import ude.obligatorio.persistencia.daos.DAOAlumnos;
+import ude.obligatorio.persistencia.fabrica.FabricaAbstracta;
 
 
 /**
@@ -32,19 +33,20 @@ public class Fachada extends UnicastRemoteObject implements IFachada {
 
     private static final long serialVersionUID = 1L;
     private final IPoolConexiones ipool;
-    private DAOAlumnos dao;
+    private final IDAOAlumnos dao;
 
 
 
     public Fachada() throws RemoteException, PersistenciaException {
         super();
-        dao = new DAOAlumnos();
 
         try {
             Properties p = new Properties();
             p.load(new FileInputStream("config.properties"));
 
             ipool = (IPoolConexiones) Class.forName(p.getProperty("poolConcreto")).newInstance();
+            FabricaAbstracta fabrica = (FabricaAbstracta) Class.forName(p.getProperty("fabricaConcreta")).newInstance();
+            dao = fabrica.crearIDAOAlumnos();
         } catch (Exception e) {
             throw new PersistenciaException("Error al cargar pool de conexiones: " + e);
         }
