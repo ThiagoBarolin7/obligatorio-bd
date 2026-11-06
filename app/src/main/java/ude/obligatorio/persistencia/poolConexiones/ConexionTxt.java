@@ -60,7 +60,7 @@ public class ConexionTxt implements IConexion {
         }
     }
 
-    public BufferedWriter getArchivoRegistrosEscritura(int cedula) throws PersistenciaException {
+    public BufferedWriter getArchivoRegistrosAgregar(int cedula) throws PersistenciaException {
         if (!modifica) {
             throw new PersistenciaException("No se permite escribir el archivo");
         }
@@ -68,8 +68,7 @@ public class ConexionTxt implements IConexion {
         try {
             return Files.newBufferedWriter(
                     obtenerArchivo(String.format(REGISTROS, String.valueOf(cedula))),
-                    StandardOpenOption.TRUNCATE_EXISTING,
-                    StandardOpenOption.WRITE);
+                    StandardOpenOption.APPEND);
         } catch (IOException e) {
             throw new PersistenciaException("Error al obtener el archivo");
         }

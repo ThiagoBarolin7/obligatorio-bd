@@ -33,7 +33,7 @@ public class DAORegistrosTxt implements IDAORegistros {
     public void insback(IConexion icon, Registro reg) throws PersistenciaException {
         ConexionTxt con = (ConexionTxt) icon;
 
-        try (BufferedWriter writer = con.getArchivoRegistrosEscritura(cedAlumno)) {
+        try (BufferedWriter writer = con.getArchivoRegistrosAgregar(cedAlumno)) {
             writer.write(reg.getNumero() + " | " + reg.getActividad() + " | " + reg.getNota());
             writer.newLine();
         } catch (IOException e) {
@@ -46,7 +46,7 @@ public class DAORegistrosTxt implements IDAORegistros {
         List<Registro> lista = leerRegistros(icon);
         Registro registro = null;
 
-        if (numR >= 1 || numR <= lista.size()) {
+        if (numR >= 1 && numR <= lista.size()) {
             registro = lista.get(numR - 1);
         }
         

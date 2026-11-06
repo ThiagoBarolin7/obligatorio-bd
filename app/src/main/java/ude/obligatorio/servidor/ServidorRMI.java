@@ -1,5 +1,7 @@
 package ude.obligatorio.servidor;
 
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -17,9 +19,18 @@ public class ServidorRMI {
     public static void main(String[] args) {
         try {
             Properties cfg = new Properties();
-            try (InputStream in = ServidorRMI.class.getResourceAsStream("/config.properties")) {
-                cfg.load(in);
+
+            try (InputStream is = ServidorRMI.class
+                    .getClassLoader()
+                    .getResourceAsStream("config.properties")) {
+
+                if (is == null) {
+                    throw new IOException("No se encontró config.properties en el classpath");
+                }
+
+                cfg.load(is);
             }
+
             int puerto = Integer.parseInt(cfg.getProperty("rmi.puerto", "1099"));
             String nombre = cfg.getProperty("rmi.nombre", "Fachada");
 

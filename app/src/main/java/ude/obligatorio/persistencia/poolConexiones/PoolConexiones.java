@@ -3,6 +3,8 @@ package ude.obligatorio.persistencia.poolConexiones;
 import ude.obligatorio.logica.excepciones.PersistenciaException;
 
 import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -19,7 +21,17 @@ public class PoolConexiones implements IPoolConexiones {
     public PoolConexiones() throws PersistenciaException {
         try {
             Properties p = new Properties();
-            p.load(new FileInputStream("config.properties"));
+
+            try (InputStream is = PoolConexiones.class
+                    .getClassLoader()
+                    .getResourceAsStream("config.properties")) {
+
+                if (is == null) {
+                    throw new IOException("No se encontró config.properties");
+                }
+
+                p.load(is);
+            }
 
             driver = p.getProperty("driver");
             url = p.getProperty("url");
@@ -27,12 +39,13 @@ public class PoolConexiones implements IPoolConexiones {
             password = p.getProperty("password");
             tamanio = Integer.parseInt(p.getProperty("tamanio"));
 
-            nivelTransaccionalidad = Connection.TRANSACTION_SERIALIZABLE; // TODO: Cargar properties
+            nivelTransaccionalidad = Connection.TRANSACTION_SERIALIZABLE;
 
             Class.forName(driver);
             conexiones = new IConexion[tamanio];
             creadas = 0;
             tope = 0;
+
         } catch (Exception e) {
             throw new PersistenciaException("Error al inicializar el pool de conexiones");
         }

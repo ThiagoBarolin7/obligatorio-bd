@@ -64,11 +64,14 @@ public class DAOAlumnosTxt implements IDAOAlumnos {
     public Alumno find(IConexion icon, int cedA) throws PersistenciaException {
         Alumno alumno = null;
         ConexionTxt con = (ConexionTxt) icon;
-        String linea;
 
         try (BufferedReader reader = con.getArchivoAlumnos()) {
+            String linea;
             while (alumno == null && (linea = reader.readLine()) != null) {
-                alumno = leerAlumno(linea);
+                Alumno a = leerAlumno(linea);
+                if (a != null && a.getCedula() == cedA) {
+                    alumno = a;
+            }
             }
         } catch (IOException | NumberFormatException | ArrayIndexOutOfBoundsException e) {
             throw new PersistenciaException("Error de acceso a los datos");

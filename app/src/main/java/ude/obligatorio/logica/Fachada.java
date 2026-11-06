@@ -1,6 +1,8 @@
 package ude.obligatorio.logica;
 
 import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.sql.Connection;
@@ -19,7 +21,6 @@ import ude.obligatorio.logica.valueObjects.VORegistroListado;
 import ude.obligatorio.persistencia.daos.*;
 import ude.obligatorio.persistencia.poolConexiones.IConexion;
 import ude.obligatorio.persistencia.poolConexiones.IPoolConexiones;
-import ude.obligatorio.persistencia.daos.DAOAlumnos;
 import ude.obligatorio.persistencia.fabrica.FabricaAbstracta;
 
 
@@ -40,11 +41,30 @@ public class Fachada extends UnicastRemoteObject implements IFachada {
 
         try {
             Properties p = new Properties();
-            p.load(new FileInputStream("config.properties"));
 
-            ipool = (IPoolConexiones) Class.forName(p.getProperty("poolConcreto")).newInstance();
-            FabricaAbstracta fabrica = (FabricaAbstracta) Class.forName(p.getProperty("fabricaConcreta")).newInstance();
+            try (InputStream is = Fachada.class
+                    .getClassLoader()
+                    .getResourceAsStream("config.properties")) {
+
+                if (is == null) {
+                    throw new IOException("No se encontró config.properties");
+                }
+
+                p.load(is);
+            }
+
+            ipool = (IPoolConexiones) Class
+                    .forName(p.getProperty("poolConcreto"))
+                    .getDeclaredConstructor()
+                    .newInstance();
+
+            FabricaAbstracta fabrica = (FabricaAbstracta) Class
+                    .forName(p.getProperty("fabricaConcreta"))
+                    .getDeclaredConstructor()
+                    .newInstance();
+
             dao = fabrica.crearIDAOAlumnos();
+
         } catch (Exception e) {
             throw new PersistenciaException("Error al cargar pool de conexiones: " + e);
         }

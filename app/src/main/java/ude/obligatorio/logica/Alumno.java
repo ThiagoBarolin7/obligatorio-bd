@@ -1,6 +1,8 @@
 package ude.obligatorio.logica;
 
 import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.Serializable;
 import java.lang.module.Configuration;
 import java.util.List;
@@ -28,12 +30,29 @@ public class Alumno implements Serializable {
         this.cedula = cedula;
         this.nombre = nombre;
         this.apellido = apellido;
+
         try {
             Properties p = new Properties();
-            p.load(new FileInputStream("config.properties"));
-            FabricaAbstracta fabrica = (FabricaAbstracta) Class.forName(p.getProperty("fabricaConcreta")).newInstance();
+
+            try (InputStream is = Alumno.class
+                    .getClassLoader()
+                    .getResourceAsStream("config.properties")) {
+
+                if (is == null) {
+                    throw new IOException("No se encontró config.properties");
+                }
+
+                p.load(is);
+            }
+
+            FabricaAbstracta fabrica = (FabricaAbstracta) Class
+                    .forName(p.getProperty("fabricaConcreta"))
+                    .getDeclaredConstructor()
+                    .newInstance();
+
             this.secuencia = fabrica.crearIDAORegistros(cedula);
-        } catch(Exception e) {
+
+        } catch (Exception e) {
             throw new PersistenciaException("Error al cargar datos del alumno");
         }
     }
