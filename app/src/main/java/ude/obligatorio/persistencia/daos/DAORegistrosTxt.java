@@ -34,7 +34,7 @@ public class DAORegistrosTxt implements IDAORegistros {
         ConexionTxt con = (ConexionTxt) icon;
 
         try (BufferedWriter writer = con.getArchivoRegistrosEscritura(cedAlumno)) {
-            writer.write(reg.getNumero() + " / " + reg.getActividad() + " / " + reg.getNota());
+            writer.write(reg.getNumero() + " | " + reg.getActividad() + " | " + reg.getNota());
             writer.newLine();
         } catch (IOException e) {
             throw new PersistenciaException("Error al escribir registro en archivo");
@@ -44,10 +44,13 @@ public class DAORegistrosTxt implements IDAORegistros {
     @Override 
     public Registro kesimo(IConexion icon, int numR) throws PersistenciaException {
         List<Registro> lista = leerRegistros(icon);
-        if (numR < 1 || numR > lista.size()) {
-            throw new PersistenciaException("Número de registro fuera de rango");
+        Registro registro = null;
+
+        if (numR >= 1 || numR <= lista.size()) {
+            registro = lista.get(numR - 1);
         }
-        return lista.get(numR - 1);
+        
+        return registro;
     }
 
     @Override 
@@ -97,9 +100,9 @@ public class DAORegistrosTxt implements IDAORegistros {
     private Registro leerRegistro(String linea) throws PersistenciaException {
         Registro registro = null;
 
-        if (linea != null && linea.isBlank()) {
+        if (linea != null && !linea.isBlank()) {
             try {
-                String[] campos = linea.split("\\/");
+                String[] campos = linea.split("\\|");
                 int numero = Integer.parseInt(campos[0].trim());
                 String materia = campos[1].trim();
                 int nota = Integer.parseInt(campos[2].trim());

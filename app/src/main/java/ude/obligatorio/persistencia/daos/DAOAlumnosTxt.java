@@ -85,7 +85,7 @@ public class DAOAlumnosTxt implements IDAOAlumnos {
     @Override 
     public List<Alumno> listarAlumnos(IConexion icon) throws PersistenciaException {
         ConexionTxt con = (ConexionTxt) icon;
-        return listarAlumnos(icon);
+        return leerAlumnos(con);
     }
 
     @Override 
@@ -96,8 +96,9 @@ public class DAOAlumnosTxt implements IDAOAlumnos {
         for (Alumno a : leerAlumnos((ConexionTxt) icon)) {
             double prom = new DAORegistrosTxt(a.getCedula()).promedioNotas(icon);
 
-            if(mejor != null && prom > mayor) {
+            if(mejor == null || prom > mayor) {
                 mejor = a;
+                mayor = prom;
             }
         }
 
@@ -108,7 +109,17 @@ public class DAOAlumnosTxt implements IDAOAlumnos {
 
     @Override 
     public int contarAlumnos(IConexion icon, String act, int nota) throws PersistenciaException {
-        return leerAlumnos((ConexionTxt) icon).size();
+        int cant = 0;
+
+        for (Alumno a : leerAlumnos((ConexionTxt) icon)) {
+            for (VORegistroListado r : a.listarRegistros(icon)) {
+                if (r.getActividad().equalsIgnoreCase(act) && r.getNota() == nota) {
+                    cant++;
+                    break;
+                }
+            }
+        }
+        return cant;
     }
 
     // Auxiliares
@@ -133,9 +144,9 @@ public class DAOAlumnosTxt implements IDAOAlumnos {
     private Alumno leerAlumno (String linea) throws PersistenciaException {
         Alumno alumno = null;
 
-        if (linea != null && linea.isBlank()) {
+        if (linea != null && !linea.isBlank()) {
             try {
-                String[] campos = linea.split("\\/");
+                String[] campos = linea.split("\\|");
                 int cedula = Integer.parseInt(campos[0].trim());
                 alumno = new Alumno(cedula, campos[1].trim(), campos[2].trim());
             } catch (ArrayIndexOutOfBoundsException | NumberFormatException e) {

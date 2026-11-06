@@ -35,8 +35,6 @@ public class Fachada extends UnicastRemoteObject implements IFachada {
     private final IPoolConexiones ipool;
     private final IDAOAlumnos dao;
 
-
-
     public Fachada() throws RemoteException, PersistenciaException {
         super();
 

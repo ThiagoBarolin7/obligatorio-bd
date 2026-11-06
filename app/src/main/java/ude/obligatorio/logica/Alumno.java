@@ -1,13 +1,18 @@
 package ude.obligatorio.logica;
 
+import java.io.FileInputStream;
 import java.io.Serializable;
+import java.lang.module.Configuration;
 import java.util.List;
+import java.util.Properties;
 
 import ude.obligatorio.logica.excepciones.PersistenciaException;
 import ude.obligatorio.logica.valueObjects.VOActividad;
 import ude.obligatorio.logica.valueObjects.VORegistro;
 import ude.obligatorio.logica.valueObjects.VORegistroListado;
 import ude.obligatorio.persistencia.daos.DAORegistros;
+import ude.obligatorio.persistencia.daos.IDAORegistros;
+import ude.obligatorio.persistencia.fabrica.FabricaAbstracta;
 import ude.obligatorio.persistencia.poolConexiones.IConexion;
 
 public class Alumno implements Serializable {
@@ -17,13 +22,20 @@ public class Alumno implements Serializable {
     private int cedula;
     private String nombre;
     private String apellido;
-    private DAORegistros secuencia;
+    private IDAORegistros secuencia;
 
     public Alumno(int cedula, String nombre, String apellido) throws PersistenciaException {
         this.cedula = cedula;
         this.nombre = nombre;
         this.apellido = apellido;
-        this.secuencia = new DAORegistros(cedula);
+        try {
+            Properties p = new Properties();
+            p.load(new FileInputStream("config.properties"));
+            FabricaAbstracta fabrica = (FabricaAbstracta) Class.forName(p.getProperty("fabricaConcreta")).newInstance();
+            this.secuencia = fabrica.crearIDAORegistros(cedula);
+        } catch(Exception e) {
+            throw new PersistenciaException("Error al cargar datos del alumno");
+        }
     }
 
     public int getCedula() {

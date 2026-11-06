@@ -3,6 +3,7 @@ package ude.obligatorio.persistencia.poolConexiones;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.io.StringReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -32,7 +33,7 @@ public class ConexionTxt implements IConexion {
 
     public BufferedReader getArchivoAlumnos() throws PersistenciaException {
         try {
-            return Files.newBufferedReader(obtenerArchivo(ALUMNOS));
+            return abrirLectura(ALUMNOS);
         } catch (IOException e) {
             throw new PersistenciaException("Error al obtener el archivo");
         }
@@ -45,7 +46,7 @@ public class ConexionTxt implements IConexion {
 
         try {
             return Files.newBufferedWriter(
-                    obtenerArchivo(ALUMNOS), StandardOpenOption.APPEND, StandardOpenOption.WRITE);
+                    obtenerArchivo(ALUMNOS), StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE);
         } catch (IOException e) {
             throw new PersistenciaException("Error al obtener el archivo");
         }
@@ -53,7 +54,7 @@ public class ConexionTxt implements IConexion {
 
     public BufferedReader getArchivoRegistros(int cedula) throws PersistenciaException {
         try {
-            return Files.newBufferedReader(obtenerArchivo(String.format(REGISTROS, String.valueOf(cedula))));
+            return abrirLectura(String.format(REGISTROS, String.valueOf(cedula)));
         } catch (IOException e) {
             throw new PersistenciaException("Error al obtener el archivo");
         }
@@ -67,7 +68,7 @@ public class ConexionTxt implements IConexion {
         try {
             return Files.newBufferedWriter(
                     obtenerArchivo(String.format(REGISTROS, String.valueOf(cedula))),
-                    StandardOpenOption.APPEND,
+                    StandardOpenOption.TRUNCATE_EXISTING,
                     StandardOpenOption.WRITE);
         } catch (IOException e) {
             throw new PersistenciaException("Error al obtener el archivo");
@@ -80,6 +81,21 @@ public class ConexionTxt implements IConexion {
         } else {
             descartarCambios();
         }
+    }
+
+    private BufferedReader abrirLectura(String nombre) throws IOException {
+        Path original = directorio.resolve(nombre);
+        Path temporal = temporales.get(original);
+
+        if (temporal != null) {
+            return Files.newBufferedReader(temporal);
+        }
+
+        if (!Files.exists(original)) {
+            return new BufferedReader(new StringReader(""));
+        }
+
+        return Files.newBufferedReader(original);
     }
 
     private Path obtenerArchivo(String nombre) throws PersistenciaException {

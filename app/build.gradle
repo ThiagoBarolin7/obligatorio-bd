@@ -37,7 +37,7 @@ tasks.register('runServidor', JavaExec) {
     group = 'application'
     description = 'Levanta el servidor RMI que publica la Fachada'
     classpath = sourceSets.main.runtimeClasspath
-    mainClass = 'ude.bdpractico5.servidor.ServidorRMI'
+    mainClass = 'ude.obligatorio.servidor.ServidorRMI'
 }
 
 // ./gradlew :app:runCliente   -> abre la interfaz grafica
@@ -45,7 +45,7 @@ tasks.register('runCliente', JavaExec) {
     group = 'application'
     description = 'Abre la capa grafica, que accede a la Fachada por RMI'
     classpath = sourceSets.main.runtimeClasspath
-    mainClass = 'ude.bdpractico5.grafica.Principal'
+    mainClass = 'ude.obligatorio.grafica.Principal'
 }
 
 tasks.named('test') {
