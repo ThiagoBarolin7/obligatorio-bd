@@ -46,7 +46,10 @@ public class ConexionTxt implements IConexion {
 
         try {
             return Files.newBufferedWriter(
-                    obtenerArchivo(ALUMNOS), StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE);
+                    obtenerArchivo(ALUMNOS), 
+                    StandardOpenOption.CREATE,
+                    StandardOpenOption.TRUNCATE_EXISTING, 
+                    StandardOpenOption.WRITE);
         } catch (IOException e) {
             throw new PersistenciaException("Error al obtener el archivo");
         }

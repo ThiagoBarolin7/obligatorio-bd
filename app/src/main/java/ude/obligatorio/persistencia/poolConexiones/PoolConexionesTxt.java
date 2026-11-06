@@ -3,6 +3,7 @@ package ude.obligatorio.persistencia.poolConexiones;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Properties;
 import ude.obligatorio.logica.excepciones.PersistenciaException;
@@ -32,6 +33,9 @@ public class PoolConexionesTxt implements IPoolConexiones {
             }
 
             directorio = Path.of(p.getProperty("directorio"));
+
+            Files.createDirectories(directorio);
+
             maximoEscritoresEnEspera = Integer.parseInt(p.getProperty("maximoEscritoresEnEspera"));
 
             estaEscribiendo = false;
