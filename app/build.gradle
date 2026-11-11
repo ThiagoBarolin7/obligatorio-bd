@@ -51,3 +51,10 @@ tasks.register('runCliente', JavaExec) {
 tasks.named('test') {
     useJUnitPlatform()
 }
+
+tasks.register('runCrearBd', JavaExec) {
+    group = 'application'
+    description = 'Crea la base Escuela y carga los alumnos'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'ude.obligatorio.CreacionBaseDatos'
+}
