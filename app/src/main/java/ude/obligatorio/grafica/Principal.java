@@ -1,14 +1,11 @@
 package ude.obligatorio.grafica;
 
-import java.io.InputStream;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
-import java.util.Properties;
-
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
-
+import ude.obligatorio.config.Config;
 import ude.obligatorio.grafica.ventanas.VentanaPrincipal;
 import ude.obligatorio.logica.IFachada;
 
@@ -20,13 +17,9 @@ public class Principal {
 
     public static void main(String[] args) {
         try {
-            Properties cfg = new Properties();
-            try (InputStream in = Principal.class.getResourceAsStream("/config.properties")) {
-                cfg.load(in);
-            }
-            String host = cfg.getProperty("rmi.host", "localhost");
-            int puerto = Integer.parseInt(cfg.getProperty("rmi.puerto", "1099"));
-            String nombre = cfg.getProperty("rmi.nombre", "Fachada");
+            String host = Config.getObligatorio("rmi.host");
+            int puerto = Integer.parseInt(Config.getObligatorio("rmi.puerto"));
+            String nombre = Config.getObligatorio("rmi.nombre");
 
             Registry registry = LocateRegistry.getRegistry(host, puerto);
             final IFachada fachada = (IFachada) registry.lookup(nombre);
@@ -36,17 +29,18 @@ public class Principal {
                     try {
                         UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
                     } catch (Exception ignorada) {
-                        // se usa el look and feel por defecto
                     }
                     new VentanaPrincipal(fachada).setVisible(true);
                 }
             });
 
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(null,
+            JOptionPane.showMessageDialog(
+                    null,
                     "No se pudo conectar con el servidor:\n" + e.getMessage()
-                    + "\n\nVerifique que el servidor RMI este levantado.",
-                    "Error de conexion", JOptionPane.ERROR_MESSAGE);
+                            + "\n\nVerifique que el servidor RMI este levantado.",
+                    "Error de conexion",
+                    JOptionPane.ERROR_MESSAGE);
         }
     }
 }

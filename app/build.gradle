@@ -1,20 +1,16 @@
 plugins {
     id 'application'
+    id 'com.gradleup.shadow' version '9.3.1'
 }
 
 repositories {
     mavenCentral()
 }
 
-// Nextcloud convierte los archivos en placeholders y rompe Gradle
-// ("not a regular file"): la salida de compilacion va fuera del arbol sincronizado.
-layout.buildDirectory = new File(System.getProperty('user.home'), '.gradle-builds/obligatorio/app')
-
 dependencies {
     testImplementation libs.junit.jupiter
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
-    // Driver JDBC de MySQL
     implementation 'com.mysql:mysql-connector-j:9.1.0'
 }
 
@@ -29,7 +25,7 @@ tasks.withType(JavaCompile).configureEach {
 }
 
 application {
-    mainClass = 'ude.bdpractico5.servidor.ServidorRMI'
+    mainClass = 'ude.obligatorio.servidor.ServidorRMI'
 }
 
 // ./gradlew :app:runServidor  -> publica la Fachada en el registro RMI
@@ -46,6 +42,13 @@ tasks.register('runCliente', JavaExec) {
     description = 'Abre la capa grafica, que accede a la Fachada por RMI'
     classpath = sourceSets.main.runtimeClasspath
     mainClass = 'ude.obligatorio.grafica.Principal'
+}
+
+tasks.register('runCrearBd', JavaExec) {
+    group = 'application'
+    description = 'Crea la base Escuela y carga los alumnos'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'ude.obligatorio.CreacionBaseDatos'
 }
 
 tasks.named('test') {
