@@ -3,7 +3,7 @@ services:
     build:
       context: .
     container_name: obligatorio_servidor
-    restart: unless_stopped
+    restart: unless-stopped
     ports:
       - "1099:1099"
       - "1098:1098"
@@ -22,7 +22,7 @@ services:
   mysql:
     image: mysql:8.4
     container_name: obligatorio-mysql
-    restart: unless_stopped
+    restart: unless-stopped
     env_file:
       - .env
     environment:
