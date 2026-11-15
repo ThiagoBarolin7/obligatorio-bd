@@ -11,6 +11,7 @@ build
 app/bin/
 app/data/
 app/.settings/
+.settings/
 .vscode/
 .project/
 .idea/
