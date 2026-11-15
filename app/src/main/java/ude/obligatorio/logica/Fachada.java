@@ -1,14 +1,9 @@
 package ude.obligatorio.logica;
 
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
-import java.sql.Connection;
 import java.util.List;
-import java.util.Properties;
-
+import ude.obligatorio.config.Config;
 import ude.obligatorio.logica.excepciones.AlumnoException;
 import ude.obligatorio.logica.excepciones.NotasException;
 import ude.obligatorio.logica.excepciones.PersistenciaException;
@@ -19,17 +14,10 @@ import ude.obligatorio.logica.valueObjects.VOAlumnoProm;
 import ude.obligatorio.logica.valueObjects.VORegistro;
 import ude.obligatorio.logica.valueObjects.VORegistroListado;
 import ude.obligatorio.persistencia.daos.*;
+import ude.obligatorio.persistencia.fabrica.FabricaAbstracta;
 import ude.obligatorio.persistencia.poolConexiones.IConexion;
 import ude.obligatorio.persistencia.poolConexiones.IPoolConexiones;
-import ude.obligatorio.persistencia.fabrica.FabricaAbstracta;
 
-
-/**
- * Fachada de acceso a la capa de logica y persistencia.
- *
- * Cada requerimiento es una transaccion: pide una IConexion al pool, la usa
- * y la devuelve haciendo commit si todo salio bien o rollback si hubo un error.
- */
 public class Fachada extends UnicastRemoteObject implements IFachada {
 
     private static final long serialVersionUID = 1L;
@@ -40,43 +28,23 @@ public class Fachada extends UnicastRemoteObject implements IFachada {
         super();
 
         try {
-            Properties p = new Properties();
-
-            try (InputStream is = Fachada.class
-                    .getClassLoader()
-                    .getResourceAsStream("config.properties")) {
-
-                if (is == null) {
-                    throw new IOException("No se encontró config.properties");
-                }
-
-                p.load(is);
-            }
-
-            ipool = (IPoolConexiones) Class
-                    .forName(p.getProperty("poolConcreto"))
+            ipool = (IPoolConexiones) Class.forName(Config.getObligatorio("poolConcreto"))
                     .getDeclaredConstructor()
                     .newInstance();
 
-            FabricaAbstracta fabrica = (FabricaAbstracta) Class
-                    .forName(p.getProperty("fabricaConcreta"))
+            FabricaAbstracta fabrica = (FabricaAbstracta) Class.forName(Config.getObligatorio("fabricaConcreta"))
                     .getDeclaredConstructor()
                     .newInstance();
 
             dao = fabrica.crearIDAOAlumnos();
 
         } catch (Exception e) {
-            throw new PersistenciaException("Error al cargar pool de conexiones: " + e);
+            throw new PersistenciaException("Error al cargar pool de conexiones: " + e.getMessage());
         }
     }
 
-    // ------------------------------------------------------------------
-    // Requerimientos
-    // ------------------------------------------------------------------
-
     @Override
-    public void nuevoAlumno(VOAlumno voA)
-            throws NotasException, PersistenciaException, RemoteException {
+    public void nuevoAlumno(VOAlumno voA) throws NotasException, PersistenciaException, RemoteException {
         IConexion icon = ipool.obtenerConexion(true);
         boolean ok = false;
         try {
@@ -92,7 +60,7 @@ public class Fachada extends UnicastRemoteObject implements IFachada {
     }
 
     @Override
-        public void registrarNota(int cedA, VORegistro voR) throws NotasException, PersistenciaException, RemoteException {
+    public void registrarNota(int cedA, VORegistro voR) throws NotasException, PersistenciaException, RemoteException {
         IConexion icon = ipool.obtenerConexion(true);
         boolean ok = false;
         try {
@@ -117,10 +85,7 @@ public class Fachada extends UnicastRemoteObject implements IFachada {
         boolean ok = false;
         try {
             List<VOAlumno> lista = dao.listarAlumnos(icon).stream()
-                    .map(a -> new VOAlumno(
-                            a.getCedula(),
-                            a.getNombre(),
-                            a.getApellido()))
+                    .map(a -> new VOAlumno(a.getCedula(), a.getNombre(), a.getApellido()))
                     .toList();
             ok = true;
             return lista;
@@ -130,7 +95,8 @@ public class Fachada extends UnicastRemoteObject implements IFachada {
     }
 
     @Override
-        public VORegistro obtenerRegistro(int cedA, int numR) throws NotasException, PersistenciaException, RemoteException {
+    public VORegistro obtenerRegistro(int cedA, int numR)
+            throws NotasException, PersistenciaException, RemoteException {
         IConexion icon = ipool.obtenerConexion(false);
         boolean ok = false;
         try {
@@ -153,7 +119,8 @@ public class Fachada extends UnicastRemoteObject implements IFachada {
     }
 
     @Override
-    public List<VORegistroListado> listarRegistros(int cedA) throws NotasException, PersistenciaException, RemoteException {
+    public List<VORegistroListado> listarRegistros(int cedA)
+            throws NotasException, PersistenciaException, RemoteException {
         IConexion icon = ipool.obtenerConexion(false);
         boolean ok = false;
         try {

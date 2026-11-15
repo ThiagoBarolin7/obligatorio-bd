@@ -1,18 +1,12 @@
 package ude.obligatorio.logica;
 
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.io.Serializable;
-import java.lang.module.Configuration;
 import java.util.List;
-import java.util.Properties;
-
+import ude.obligatorio.config.Config;
 import ude.obligatorio.logica.excepciones.PersistenciaException;
 import ude.obligatorio.logica.valueObjects.VOActividad;
 import ude.obligatorio.logica.valueObjects.VORegistro;
 import ude.obligatorio.logica.valueObjects.VORegistroListado;
-import ude.obligatorio.persistencia.daos.DAORegistros;
 import ude.obligatorio.persistencia.daos.IDAORegistros;
 import ude.obligatorio.persistencia.fabrica.FabricaAbstracta;
 import ude.obligatorio.persistencia.poolConexiones.IConexion;
@@ -32,21 +26,7 @@ public class Alumno implements Serializable {
         this.apellido = apellido;
 
         try {
-            Properties p = new Properties();
-
-            try (InputStream is = Alumno.class
-                    .getClassLoader()
-                    .getResourceAsStream("config.properties")) {
-
-                if (is == null) {
-                    throw new IOException("No se encontró config.properties");
-                }
-
-                p.load(is);
-            }
-
-            FabricaAbstracta fabrica = (FabricaAbstracta) Class
-                    .forName(p.getProperty("fabricaConcreta"))
+            FabricaAbstracta fabrica = (FabricaAbstracta) Class.forName(Config.getObligatorio("fabricaConcreta"))
                     .getDeclaredConstructor()
                     .newInstance();
 
@@ -79,8 +59,7 @@ public class Alumno implements Serializable {
 
     public VORegistro obtenRegistro(IConexion icon, int numR) throws PersistenciaException {
         Registro reg = secuencia.kesimo(icon, numR);
-        if (reg == null) 
-            return null;
+        if (reg == null) return null;
 
         return new VORegistro(reg.getActividad(), reg.getNota());
     }

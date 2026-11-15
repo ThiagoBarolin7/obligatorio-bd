@@ -1,11 +1,8 @@
 package ude.obligatorio.persistencia.poolConexiones;
 
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Properties;
+import ude.obligatorio.config.Config;
 import ude.obligatorio.logica.excepciones.PersistenciaException;
 
 public class PoolConexionesTxt implements IPoolConexiones {
@@ -19,24 +16,10 @@ public class PoolConexionesTxt implements IPoolConexiones {
 
     public PoolConexionesTxt() throws PersistenciaException {
         try {
-            Properties p = new Properties();
-
-            try (InputStream is = PoolConexionesTxt.class
-                    .getClassLoader()
-                    .getResourceAsStream("config.properties")) {
-
-                if (is == null) {
-                    throw new IOException("No se encontró config.properties");
-                }
-
-                p.load(is);
-            }
-
-            directorio = Path.of(p.getProperty("directorio"));
+            directorio = Path.of(Config.getObligatorio("directorio"));
+            maximoEscritoresEnEspera = Config.getInt("maximoEscritoresEnEspera", 2);
 
             Files.createDirectories(directorio);
-
-            maximoEscritoresEnEspera = Integer.parseInt(p.getProperty("maximoEscritoresEnEspera"));
 
             estaEscribiendo = false;
             escritoresEsperando = 0;
@@ -63,7 +46,7 @@ public class PoolConexionesTxt implements IPoolConexiones {
         if (con.modifica()) {
             try {
                 con.finalize(ok);
-            } catch (IOException e) {
+            } catch (Exception e) {
                 throw new PersistenciaException("Error al liberar la conexion");
             } finally {
                 liberarEscritura();

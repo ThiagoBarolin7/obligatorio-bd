@@ -1,38 +1,19 @@
 package ude.obligatorio.servidor;
 
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
-import java.util.Properties;
-
+import java.rmi.server.UnicastRemoteObject;
+import ude.obligatorio.config.Config;
 import ude.obligatorio.logica.Fachada;
 import ude.obligatorio.logica.IFachada;
 
-/**
- * Servidor central: crea la Fachada y la publica en el registro RMI para que
- * los equipos clientes puedan invocarla.
- */
 public class ServidorRMI {
 
     public static void main(String[] args) {
         try {
-            Properties cfg = new Properties();
-
-            try (InputStream is = ServidorRMI.class
-                    .getClassLoader()
-                    .getResourceAsStream("config.properties")) {
-
-                if (is == null) {
-                    throw new IOException("No se encontró config.properties en el classpath");
-                }
-
-                cfg.load(is);
-            }
-
-            int puerto = Integer.parseInt(cfg.getProperty("rmi.puerto", "1099"));
-            String nombre = cfg.getProperty("rmi.nombre", "Fachada");
+            int puerto = Integer.parseInt(Config.getObligatorio("rmi.puerto"));
+            String nombre = Config.getObligatorio("rmi.nombre");
+            int puertoServidor = Integer.parseInt(Config.getObligatorio("rmi.servidor.puerto"));
 
             IFachada fachada = new Fachada();
 
@@ -45,6 +26,7 @@ public class ServidorRMI {
                 System.out.println("Usando el registro RMI ya existente en el puerto " + puerto);
             }
 
+            UnicastRemoteObject.exportObject(fachada, puertoServidor);
             registry.rebind(nombre, fachada);
 
             System.out.println("Fachada publicada como \"" + nombre + "\".");
