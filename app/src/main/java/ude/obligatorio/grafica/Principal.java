@@ -9,10 +9,6 @@ import ude.obligatorio.config.Config;
 import ude.obligatorio.grafica.ventanas.VentanaPrincipal;
 import ude.obligatorio.logica.IFachada;
 
-/**
- * Punto de entrada de la capa grafica (equipo Usuario).
- * Busca la Fachada en el registro RMI del servidor central y abre el menu principal.
- */
 public class Principal {
 
     public static void main(String[] args) {

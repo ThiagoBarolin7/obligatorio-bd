@@ -1,12 +1,11 @@
 package ude.obligatorio;
 
-import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Properties;
+import ude.obligatorio.config.Config;
 
 /**
  * Practico 4 - Ejercicio 2.
@@ -25,16 +24,17 @@ import java.util.Properties;
 public class CreacionBaseDatos {
 
     private static final String[][] ALUMNOS = {
-        { "12345678", "Matilda", "Wormwood" },
-        { "25554449", "Charlie", "Brown"    },
-        { "39876542", "Dora",    "Marquez"  },
-        { "51112223", "Daniel",  "Mitchell" },
-        { "66666666", "Merlina", "Addams"   }
+        {"12345678", "Matilda", "Wormwood"},
+        {"25554449", "Charlie", "Brown"},
+        {"39876542", "Dora", "Marquez"},
+        {"51112223", "Daniel", "Mitchell"},
+        {"66666666", "Merlina", "Addams"}
     };
 
-    private static final String CREAR_BASE =
-        "CREATE DATABASE IF NOT EXISTS Escuela "
-      + "DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci";
+    private static final String CREAR_BASE = """
+        CREATE DATABASE IF NOT EXISTS Escuela
+        DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci\
+        """;
 
     private static final String CREAR_ALUMNOS = """
         CREATE TABLE IF NOT EXISTS Escuela.Alumnos (
@@ -57,15 +57,14 @@ public class CreacionBaseDatos {
         """;
 
     private static final String INSERTAR_ALUMNO =
-        "INSERT INTO Escuela.Alumnos (cedula, nombre, apellido) VALUES (?, ?, ?)";
+            "INSERT INTO Escuela.Alumnos (cedula, nombre, apellido) VALUES (?, ?, ?)";
 
     public static void main(String[] args) {
 
-        Properties cfg = cargarConfiguracion();
-        String driver   = cfg.getProperty("driver");
-        String url      = "jdbc:mysql://localhost:3306/";
-        String user     = cfg.getProperty("user");
-        String password = cfg.getProperty("password");
+        String driver = Config.getObligatorio("driver");
+        String url = Config.getObligatorio("url");
+        String user = Config.getObligatorio("user");
+        String password = Config.getObligatorio("password");
 
         Connection con = null;
         try {
@@ -117,26 +116,12 @@ public class CreacionBaseDatos {
         }
     }
 
-    private static Properties cargarConfiguracion() {
-        Properties props = new Properties();
-        try (InputStream in = CreacionBaseDatos.class.getResourceAsStream("/config.properties")) {
-            if (in == null) {
-                throw new RuntimeException("No se encontro el archivo config.properties");
-            }
-            props.load(in);
-        } catch (Exception e) {
-            throw new RuntimeException("No se pudo leer config.properties: " + e.getMessage(), e);
-        }
-        return props;
-    }
-
     private static void cerrarConexion(Connection con) {
         try {
             if (con != null) {
                 con.close();
             }
         } catch (SQLException e) {
-            // nada para hacer
         }
     }
 }
