@@ -25,7 +25,7 @@ public class Fachada extends UnicastRemoteObject implements IFachada {
     private final IDAOAlumnos dao;
 
     public Fachada() throws RemoteException, PersistenciaException {
-        super();
+        super(Config.getIntObligatorio("rmi.servidor.puerto"));
 
         try {
             ipool = (IPoolConexiones) Class.forName(Config.getObligatorio("poolConcreto"))

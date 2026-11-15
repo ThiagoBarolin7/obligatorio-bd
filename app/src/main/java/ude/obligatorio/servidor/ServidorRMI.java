@@ -15,6 +15,8 @@ public class ServidorRMI {
             String nombre = Config.getObligatorio("rmi.nombre");
             int puertoServidor = Integer.parseInt(Config.getObligatorio("rmi.servidor.puerto"));
 
+            System.setProperty("java.rmi.server.hostname", Config.getObligatorio("rmi.host"));
+
             IFachada fachada = new Fachada();
 
             Registry registry;
@@ -26,7 +28,6 @@ public class ServidorRMI {
                 System.out.println("Usando el registro RMI ya existente en el puerto " + puerto);
             }
 
-            UnicastRemoteObject.exportObject(fachada, puertoServidor);
             registry.rebind(nombre, fachada);
 
             System.out.println("Fachada publicada como \"" + nombre + "\".");
