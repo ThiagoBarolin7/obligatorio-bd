@@ -9,6 +9,11 @@ build
 
 */bin
 app/bin/
+app/data/
+app/.settings/
 .vscode/
 .project/
 .idea/
+.env
+.envrc
+.direnv/
