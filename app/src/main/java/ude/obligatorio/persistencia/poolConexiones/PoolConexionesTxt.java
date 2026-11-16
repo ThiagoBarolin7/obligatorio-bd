@@ -17,7 +17,7 @@ public class PoolConexionesTxt implements IPoolConexiones {
     public PoolConexionesTxt() throws PersistenciaException {
         try {
             directorio = Path.of(Config.getObligatorio("directorio"));
-            maximoEscritoresEnEspera = Math.max(1, Config.getInt("maximoEscritoresEnEspera", 2));
+            maximoEscritoresEnEspera = Math.max(0, Config.getInt("maximoEscritoresEnEspera", 2));
 
             Files.createDirectories(directorio);
 
@@ -56,9 +56,9 @@ public class PoolConexionesTxt implements IPoolConexiones {
         }
     }
 
-    public void adquirirLectura() throws PersistenciaException {
+    private void adquirirLectura() throws PersistenciaException {
         try {
-            while (estaEscribiendo || escritoresEsperando >= maximoEscritoresEnEspera) {
+            while (estaEscribiendo || escritoresEsperando > maximoEscritoresEnEspera) {
                 this.wait();
             }
         } catch (InterruptedException e) {
@@ -69,14 +69,14 @@ public class PoolConexionesTxt implements IPoolConexiones {
         numeroDeLectores++;
     }
 
-    public void liberarLectura() {
+    private void liberarLectura() {
         numeroDeLectores--;
         if (numeroDeLectores == 0) {
             this.notifyAll();
         }
     }
 
-    public void adquirirEscritura() throws PersistenciaException {
+    private void adquirirEscritura() throws PersistenciaException {
         escritoresEsperando++;
         try {
             while (estaEscribiendo || numeroDeLectores > 0) {
@@ -87,12 +87,13 @@ public class PoolConexionesTxt implements IPoolConexiones {
             throw new PersistenciaException("Error al obtener conexion");
         } finally {
             escritoresEsperando--;
+            this.notifyAll();
         }
 
         estaEscribiendo = true;
     }
 
-    public void liberarEscritura() {
+    private void liberarEscritura() {
         estaEscribiendo = false;
         this.notifyAll();
     }
