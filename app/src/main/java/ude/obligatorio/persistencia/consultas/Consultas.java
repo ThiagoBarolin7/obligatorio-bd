@@ -44,15 +44,6 @@ public class Consultas {
                """;
     }
 
-    /** Numero a asignar al proximo registro de ese alumno (1 si es el primero). */
-    public String siguienteNum() {
-        return """
-               SELECT IFNULL(MAX(numero), 0) + 1 AS siguiente
-               FROM Registros
-               WHERE cedAlu = ?
-               """;
-    }
-
     public String insertarRegistro() {
         return """
                INSERT INTO Registros (numero, cedAlu, actividad, nota)
@@ -91,22 +82,6 @@ public class Consultas {
                SELECT AVG(nota) AS promedio
                FROM Registros
                WHERE cedAlu = ?
-               """;
-    }
-
-    /**
-     * Alumno con mayor promedio. Se usa LEFT JOIN para que el alumno siga
-     * apareciendo aunque no tenga notas; en MySQL los NULL quedan ultimos
-     * al ordenar DESC, asi que solo se devuelve uno sin notas si nadie tiene.
-     */
-    public String alumnoMayorPromedio() {
-        return """
-               SELECT a.cedula, a.nombre, a.apellido, AVG(r.nota) AS promedio
-               FROM Alumnos a
-               LEFT JOIN Registros r ON r.cedAlu = a.cedula
-               GROUP BY a.cedula, a.nombre, a.apellido
-               ORDER BY promedio DESC
-               LIMIT 1
                """;
     }
 
