@@ -17,7 +17,7 @@ public class PoolConexionesTxt implements IPoolConexiones {
     public PoolConexionesTxt() throws PersistenciaException {
         try {
             directorio = Path.of(Config.getObligatorio("directorio"));
-            maximoEscritoresEnEspera = Config.getInt("maximoEscritoresEnEspera", 2);
+            maximoEscritoresEnEspera = Math.max(1, Config.getInt("maximoEscritoresEnEspera", 2));
 
             Files.createDirectories(directorio);
 
@@ -58,10 +58,11 @@ public class PoolConexionesTxt implements IPoolConexiones {
 
     public void adquirirLectura() throws PersistenciaException {
         try {
-            while (estaEscribiendo || escritoresEsperando > maximoEscritoresEnEspera) {
+            while (estaEscribiendo || escritoresEsperando >= maximoEscritoresEnEspera) {
                 this.wait();
             }
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             throw new PersistenciaException("Error al obtener conexion");
         }
 
@@ -82,6 +83,7 @@ public class PoolConexionesTxt implements IPoolConexiones {
                 this.wait();
             }
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             throw new PersistenciaException("Error al obtener conexion");
         } finally {
             escritoresEsperando--;
