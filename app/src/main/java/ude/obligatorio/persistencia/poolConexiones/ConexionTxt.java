@@ -10,6 +10,7 @@ import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import ude.obligatorio.logica.excepciones.PersistenciaException;
 
 public class ConexionTxt implements IConexion {
@@ -123,7 +124,7 @@ public class ConexionTxt implements IConexion {
         try {
             String nombre = original.getFileName().toString();
 
-            temporal = Files.createTempFile(directorio, nombre + "-", ".temp");
+            temporal = Files.createFile(directorio.resolve(nombre + "-" + UUID.randomUUID() + ".temp"));
 
             if (Files.exists(original)) {
                 Files.copy(original, temporal, StandardCopyOption.REPLACE_EXISTING);
