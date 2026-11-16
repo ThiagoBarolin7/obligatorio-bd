@@ -1,12 +1,11 @@
 package ude.obligatorio.persistencia.daos;
 
 import java.util.List;
-
-import ude.obligatorio.logica.excepciones.PersistenciaException;
-import ude.obligatorio.persistencia.poolConexiones.IConexion;
 import ude.obligatorio.logica.Registro;
+import ude.obligatorio.logica.excepciones.PersistenciaException;
 import ude.obligatorio.logica.valueObjects.VOActividad;
 import ude.obligatorio.logica.valueObjects.VORegistroListado;
+import ude.obligatorio.persistencia.poolConexiones.IConexion;
 
 public interface IDAORegistros {
 

@@ -8,7 +8,6 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
 import ude.obligatorio.logica.Registro;
 import ude.obligatorio.logica.excepciones.PersistenciaException;
 import ude.obligatorio.logica.valueObjects.VOActividad;
@@ -23,14 +22,16 @@ public class DAORegistrosTxt implements IDAORegistros {
     public DAORegistrosTxt(int cedAlumno) throws PersistenciaException {
         this.cedAlumno = cedAlumno;
     }
-    
-    @Override 
+
+    @Override
     public int largo(IConexion icon) throws PersistenciaException {
         return leerRegistros(icon).size();
     }
 
-    @Override 
+    @Override
     public void insback(IConexion icon, Registro reg) throws PersistenciaException {
+        verificarSinSeparador(reg.getActividad(), "La actividad");
+
         ConexionTxt con = (ConexionTxt) icon;
 
         try (BufferedWriter writer = con.getArchivoRegistrosAgregar(cedAlumno)) {
@@ -41,19 +42,28 @@ public class DAORegistrosTxt implements IDAORegistros {
         }
     }
 
-    @Override 
+    @Override
     public Registro kesimo(IConexion icon, int numR) throws PersistenciaException {
         List<Registro> lista = leerRegistros(icon);
         Registro registro = null;
 
-        if (numR >= 1 && numR <= lista.size()) {
-            registro = lista.get(numR - 1);
+        try (BufferedReader reader = ((ConexionTxt) icon).getArchivoRegistros(cedAlumno)) {
+            String linea;
+
+            while ((linea = reader.readLine()) != null) {
+                Registro actual = leerRegistro(linea);
+                if (actual.getNumero() == numR) {
+                    registro = actual;
+                }
+            }
+        } catch (IOException e) {
+            throw new PersistenciaException("Error al leer registros del archivo");
         }
-        
+
         return registro;
     }
 
-    @Override 
+    @Override
     public List<VORegistroListado> listarRegistros(IConexion icon) throws PersistenciaException {
         List<VORegistroListado> lista = new ArrayList<VORegistroListado>();
 
@@ -64,28 +74,25 @@ public class DAORegistrosTxt implements IDAORegistros {
         return lista;
     }
 
-    @Override 
+    @Override
     public double promedioNotas(IConexion icon) throws PersistenciaException {
         List<Registro> registros = leerRegistros(icon);
-        
-        if (registros.isEmpty()) 
-            return 0;
-      
-        double sumaNotas = registros.stream()
-            .mapToDouble(Registro::getNota)
-            .sum();
+
+        if (registros.isEmpty()) return 0;
+
+        double sumaNotas = registros.stream().mapToDouble(Registro::getNota).sum();
 
         return sumaNotas / registros.size();
     }
 
-    @Override 
+    @Override
     public VOActividad actividadMasCursada(IConexion icon) throws PersistenciaException {
         Map<String, Integer> veces = new LinkedHashMap<String, Integer>();
 
         for (Registro r : leerRegistros(icon)) {
             veces.merge(r.getActividad(), 1, Integer::sum);
         }
-        
+
         VOActividad masCursada = null;
 
         for (Map.Entry<String, Integer> e : veces.entrySet()) {
@@ -93,7 +100,7 @@ public class DAORegistrosTxt implements IDAORegistros {
                 masCursada = new VOActividad(e.getKey(), e.getValue());
             }
         }
-        
+
         return masCursada;
     }
 
@@ -111,14 +118,14 @@ public class DAORegistrosTxt implements IDAORegistros {
                 throw new PersistenciaException("Error al leer datos");
             }
         }
-        
+
         return registro;
     }
 
     private List<Registro> leerRegistros(IConexion icon) throws PersistenciaException {
         ConexionTxt con = (ConexionTxt) icon;
         List<Registro> lista = new ArrayList<Registro>();
-        
+
         try (BufferedReader reader = con.getArchivoRegistros(cedAlumno)) {
             String linea;
 
@@ -128,10 +135,16 @@ public class DAORegistrosTxt implements IDAORegistros {
                 }
             }
         } catch (IOException e) {
-            throw new PersistenciaException ("Error al leer registros del archivo");
+            throw new PersistenciaException("Error al leer registros del archivo");
         }
 
-        lista.sort (Comparator.comparingInt(Registro::getNumero));
+        lista.sort(Comparator.comparingInt(Registro::getNumero));
         return lista;
+    }
+
+    private void verificarSinSeparador(String dato, String campo) throws PersistenciaException {
+        if (dato != null && dato.indexOf('|') >= 0) {
+            throw new PersistenciaException(campo + " no puede contener el caracter '|': es el separador de campos del archivo de texto");
+        }
     }
 }

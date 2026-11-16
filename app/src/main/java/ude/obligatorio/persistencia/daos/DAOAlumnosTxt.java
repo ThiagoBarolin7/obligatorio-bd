@@ -44,6 +44,9 @@ public class DAOAlumnosTxt implements IDAOAlumnos {
 
     @Override 
     public void insert(IConexion icon, Alumno alumno) throws PersistenciaException {
+        verificarSinSeparador(alumno.getNombre(), "El nombre");
+        verificarSinSeparador(alumno.getApellido(), "El apellido");
+
         ConexionTxt con = (ConexionTxt) icon;
         
         List<Alumno> alumnos = leerAlumnos(con);
@@ -160,5 +163,9 @@ public class DAOAlumnosTxt implements IDAOAlumnos {
         return alumno;
     }
 
-
+    private void verificarSinSeparador(String dato, String campo) throws PersistenciaException {
+        if (dato != null && dato.indexOf('|') >= 0) {
+            throw new PersistenciaException(campo + " no puede contener el caracter '|': es el separador de campos del archivo de texto");
+        }
+    }
 }
