@@ -21,11 +21,12 @@ import ude.obligatorio.persistencia.poolConexiones.IPoolConexiones;
 public class Fachada extends UnicastRemoteObject implements IFachada {
 
     private static final long serialVersionUID = 1L;
+
     private final IPoolConexiones ipool;
     private final IDAOAlumnos dao;
 
     public Fachada() throws RemoteException, PersistenciaException {
-        super(Config.getIntObligatorio("rmi.servidor.puerto"));
+        super(puertoDelServidor());
 
         try {
             ipool = (IPoolConexiones) Class.forName(Config.getObligatorio("poolConcreto"))
@@ -39,7 +40,15 @@ public class Fachada extends UnicastRemoteObject implements IFachada {
             dao = fabrica.crearIDAOAlumnos();
 
         } catch (Exception e) {
-            throw new PersistenciaException("Error al cargar pool de conexiones: " + e.getMessage());
+            throw new PersistenciaException("Error al cargar pool de conexiones: " + e);
+        }
+    }
+
+    private static int puertoDelServidor() throws PersistenciaException {
+        try {
+            return Config.getIntObligatorio("rmi.servidor.puerto");
+        } catch (IllegalStateException | NumberFormatException e) {
+            throw new PersistenciaException("Puerto del servidor RMI invalido: " + e.getMessage());
         }
     }
 
