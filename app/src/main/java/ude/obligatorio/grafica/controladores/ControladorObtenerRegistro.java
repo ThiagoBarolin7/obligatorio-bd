@@ -4,6 +4,7 @@ import ude.obligatorio.grafica.ventanas.VentanaObtenerRegistro;
 import ude.obligatorio.logica.IFachada;
 import ude.obligatorio.logica.excepciones.NotasException;
 import ude.obligatorio.logica.excepciones.PersistenciaException;
+import ude.obligatorio.logica.valueObjects.VORegistro;
 
 /** Controlador del requerimiento "obtener registro". */
 public class ControladorObtenerRegistro {
@@ -33,7 +34,14 @@ public class ControladorObtenerRegistro {
         }
 
         try {
-            ventana.mostrarRegistro(fachada.obtenerRegistro(ced, num));
+            VORegistro voR = fachada.obtenerRegistro(ced, num);
+
+            if (voR == null) {
+                ventana.limpiarResultado();
+                ventana.mostrarError("El alumno " + ced + " no tiene un registro con numero " + num);
+            } else {
+                ventana.mostrarRegistro(voR);
+            }
         } catch (NotasException e) {
             ventana.limpiarResultado();
             ventana.mostrarError(e.getMessage());

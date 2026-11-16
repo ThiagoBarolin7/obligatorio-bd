@@ -48,6 +48,11 @@ public class VentanaObtenerRegistro extends VentanaBase {
     }
 
     public void mostrarRegistro(VORegistro voR) {
+        if (voR == null) {
+            limpiarResultado();
+            return;
+        }
+
         txtActividad.setText(voR.getActividad());
         txtNota.setText(String.valueOf(voR.getNota()));
     }
