@@ -9,7 +9,7 @@ build
 
 */bin
 app/bin/
-app/data/
+data/
 app/.settings/
 .settings/
 .vscode/
