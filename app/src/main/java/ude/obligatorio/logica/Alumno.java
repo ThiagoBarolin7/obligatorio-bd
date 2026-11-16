@@ -1,6 +1,5 @@
 package ude.obligatorio.logica;
 
-import java.io.Serializable;
 import java.util.List;
 import ude.obligatorio.config.Config;
 import ude.obligatorio.logica.excepciones.PersistenciaException;
@@ -11,9 +10,7 @@ import ude.obligatorio.persistencia.daos.IDAORegistros;
 import ude.obligatorio.persistencia.fabrica.FabricaAbstracta;
 import ude.obligatorio.persistencia.poolConexiones.IConexion;
 
-public class Alumno implements Serializable {
-
-    private static final long serialVersionUID = 1L;
+public class Alumno {
 
     private int cedula;
     private String nombre;

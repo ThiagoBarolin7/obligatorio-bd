@@ -1,10 +1,6 @@
 package ude.obligatorio.logica;
 
-import java.io.Serializable;
-
-public class Registro implements Serializable {
-
-    private static final long serialVersionUID = 1L;
+public class Registro {
 
     private String actividad;
     private int nota, numero;
