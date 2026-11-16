@@ -25,15 +25,46 @@ public class PoolConexiones implements IPoolConexiones {
             password = Config.getObligatorio("password");
             tamanio = Config.getInt("tamanio", 5);
 
-            nivelTransaccionalidad = Connection.TRANSACTION_SERIALIZABLE;
+            nivelTransaccionalidad = nivelTransaccionalidadConfigurado();
 
             Class.forName(driver);
             conexiones = new IConexion[tamanio];
             creadas = 0;
             tope = 0;
 
+        } catch (PersistenciaException e) {
+            throw e;
         } catch (Exception e) {
             throw new PersistenciaException("Error al inicializar el pool de conexiones: " + e.getMessage());
+        }
+    }
+
+    private static int nivelTransaccionalidadConfigurado() throws PersistenciaException {
+        String valor = Config.getObligatorio("nivelTransaccionalidad").trim();
+
+        switch (valor.toUpperCase()) {
+            case "READ_UNCOMMITTED":
+                return Connection.TRANSACTION_READ_UNCOMMITTED;
+            case "READ_COMMITTED":
+                return Connection.TRANSACTION_READ_COMMITTED;
+            case "REPEATABLE_READ":
+                return Connection.TRANSACTION_REPEATABLE_READ;
+            case "SERIALIZABLE":
+                return Connection.TRANSACTION_SERIALIZABLE;
+            default:
+                try {
+                    int nivel = Integer.parseInt(valor);
+
+                    if (nivel == Connection.TRANSACTION_READ_UNCOMMITTED
+                            || nivel == Connection.TRANSACTION_READ_COMMITTED
+                            || nivel == Connection.TRANSACTION_REPEATABLE_READ
+                            || nivel == Connection.TRANSACTION_SERIALIZABLE) {
+                        return nivel;
+                    }
+                } catch (NumberFormatException e) {
+                }
+
+                throw new PersistenciaException("Nivel de transaccionalidad invalido: '" + valor + "'");
         }
     }
 
@@ -47,28 +78,52 @@ public class PoolConexiones implements IPoolConexiones {
             IConexion con;
             if (tope > 0) {
                 tope--;
-                con = (IConexion) conexiones[tope];
+                con = conexiones[tope];
             } else {
                 Connection c = DriverManager.getConnection(url, user, password);
 
-                c.setTransactionIsolation(nivelTransaccionalidad);
-                c.setAutoCommit(false);
+                try {
+                    c.setTransactionIsolation(nivelTransaccionalidad);
+                    c.setAutoCommit(false);
+                } catch (SQLException e) {
+                    try {
+                        c.close();
+                    } catch (SQLException ignorada) {
+                    }
+                    throw e;
+                }
 
                 con = new Conexion(c);
                 creadas++;
             }
 
+            try {
+                ((Conexion) con).getConnection().setReadOnly(!modifica);
+            } catch (SQLException e) {
+                try {
+                    ((Conexion) con).getConnection().close();
+                } catch (SQLException ignorada) {
+                }
+                creadas--;
+                notifyAll();
+                throw e;
+            }
+
             return con;
-        } catch (SQLException | InterruptedException e) {
-            throw new PersistenciaException("Error al obtener conexion");
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new PersistenciaException("Interrumpido al obtener conexion");
+        } catch (SQLException e) {
+            throw new PersistenciaException("Error al obtener conexion: " + e.getMessage());
         }
     }
 
     @Override
     public synchronized void liberarConexion(IConexion icon, boolean ok) throws PersistenciaException {
-        try {
-            Connection con = ((Conexion) icon).getConnection();
+        Connection con = ((Conexion) icon).getConnection();
+        boolean descartar = false;
 
+        try {
             if (!con.getAutoCommit()) {
                 if (ok) {
                     con.commit();
@@ -76,12 +131,22 @@ public class PoolConexiones implements IPoolConexiones {
                     con.rollback();
                 }
             }
+            con.setReadOnly(false);
         } catch (SQLException e) {
-            throw new PersistenciaException("Error al liberar la conexion");
+            descartar = true;
+            throw new PersistenciaException("Error al liberar la conexion: " + e.getMessage());
         } finally {
-            conexiones[tope] = icon;
-            tope++;
-            notify();
+            if (descartar) {
+                try {
+                    con.close();
+                } catch (SQLException ignorada) {
+                }
+                creadas--;
+            } else {
+                conexiones[tope] = icon;
+                tope++;
+            }
+            notifyAll();
         }
     }
 }
