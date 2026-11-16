@@ -12,7 +12,7 @@ services:
     environment:
       DB_URL: jdbc:mysql://mysql:3306/Escuela
     volumes:
-      - ./data:/app/data
+      - ./app/data:/app/data
     depends_on:
       mysql:
         condition: service_healthy
